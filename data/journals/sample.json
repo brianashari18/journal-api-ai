@@ -1,0 +1,70 @@
+[
+  {
+    "date": "2026-08-31",
+    "text": "Hari ini kerjaan numpuk banget, dari meeting ke meeting, otak kayak mau hangus. Pulang malem, gak sempet olahraga.",
+    "emotions": [
+      { "emotion": "capek", "intensity": 8 },
+      { "emotion": "kesel", "intensity": 5 }
+    ]
+  },
+  {
+    "date": "2026-09-01",
+    "text": "Deadline proyek minggu depan bikin gak bisa tidur. Overthinking terus, takut hasilnya gak sesuai ekspektasi.",
+    "emotions": [
+      { "emotion": "cemas", "intensity": 9 }
+    ]
+  },
+  {
+    "date": "2026-09-02",
+    "text": "Ketemu teman lama pas lunch, cerita-cerita lama. Rasanya kayak charge energi, lupa kalau lagi banyak kerjaan.",
+    "emotions": [
+      { "emotion": "senang", "intensity": 7 },
+      { "emotion": "tenang", "intensity": 6 }
+    ]
+  },
+  {
+    "date": "2026-09-02",
+    "text": "Gak sengaja ketiduran di sofa abis maghrib, bangun jam 10 malem, langsung mandi dan kerja lagi sampe jam 2 pagi.",
+    "emotions": [
+      { "emotion": "capek", "intensity": 7 }
+    ]
+  },
+  {
+    "date": "2026-09-03",
+    "text": "Client minta revisi yang gak masuk akal di jam pulang. Diusahain sabar, tapi dalam hati geram banget.",
+    "emotions": [
+      { "emotion": "kesel", "intensity": 8 },
+      { "emotion": "capek", "intensity": 4 }
+    ]
+  },
+  {
+    "date": "2026-09-04",
+    "text": "Gaji masuk! Langsung sisihin buat investasi dan traktir keluarga. Weekend plan: naik gunung.",
+    "emotions": [
+      { "emotion": "senang", "intensity": 9 }
+    ]
+  },
+  {
+    "date": "2026-09-05",
+    "text": "Hiking ke Gunung Salak, udara seger, pemandangan keren. Pikiran jadi plong, istirahat banget dari laptop.",
+    "emotions": [
+      { "emotion": "tenang", "intensity": 9 },
+      { "emotion": "senang", "intensity": 7 }
+    ]
+  },
+  {
+    "date": "2026-09-06",
+    "text": "Besok Senin lagi, ngebayangin meeting panjang bikin males. Juga mikirin progress belajar golang yang belum kelar.",
+    "emotions": [
+      { "emotion": "cemas", "intensity": 7 },
+      { "emotion": "capek", "intensity": 6 }
+    ]
+  },
+  {
+    "date": "2026-09-06",
+    "text": "Baca roadmap AI engineer lagi, makin yakin pengen jadi AI engineer. Niat banget lanjut belajar RAG minggu ini.",
+    "emotions": [
+      { "emotion": "semangat", "intensity": 8 }
+    ]
+  }
+]
