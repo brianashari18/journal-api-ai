@@ -22,6 +22,15 @@ class SummarizeRequest(BaseModel):
     entries: List[Entry] = []
 
 
+class EntriesRequest(BaseModel):
+    entries: List[Entry]
+
+
+class EntriesResponse(BaseModel):
+    entry_ids: List[str]
+    count: int
+
+
 class PeriodSummary(BaseModel):
     start: str
     end: str

@@ -8,6 +8,8 @@ import qdrant_store
 import summarizer
 from ollama_client import chat_json
 from schemas import (
+    EntriesRequest,
+    EntriesResponse,
     Entry,
     PeriodSummary,
     QueryRequest,
@@ -25,6 +27,19 @@ ENTRY_LINE = "{e.date}|{e.day}|{e.text}"
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "journal-ai"}
+
+
+@app.post("/ai/entries", response_model=EntriesResponse)
+def save_entries(req: EntriesRequest):
+    """Simpan entri jurnal baru ke Qdrant (idempotent per date|text)."""
+    if not req.entries:
+        raise HTTPException(status_code=400, detail="entries kosong")
+    qdrant_store.ensure_collection()
+    qdrant_store.upsert_entries(req.entries)
+    return EntriesResponse(
+        entry_ids=[summarizer.entry_id_for(e) for e in req.entries],
+        count=len(req.entries),
+    )
 
 
 @app.post("/ai/summarize", response_model=WeeklySummaryResponse)

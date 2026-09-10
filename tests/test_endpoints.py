@@ -50,6 +50,30 @@ ENTRY = {
 }
 
 
+def test_entries_ok(client):
+    resp = client.post(
+        "/ai/entries",
+        json={
+            "entries": [
+                {
+                    "date": "2026-09-05",
+                    "text": "Baru nyoba guided journaling.",
+                    "emotions": [{"emotion": "tenang", "intensity": 6}],
+                }
+            ]
+        },
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["count"] == 1
+    assert len(body["entry_ids"]) == 1
+
+
+def test_entries_empty_400(client):
+    resp = client.post("/ai/entries", json={"entries": []})
+    assert resp.status_code == 400
+
+
 def test_summarize_ok(client):
     resp = client.post(
         "/ai/summarize",
