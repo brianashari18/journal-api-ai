@@ -129,3 +129,11 @@ class QueryResponse(BaseModel):
     question: str
     answer: str
     sources: List[str]
+
+
+class PromptRequest(BaseModel):
+    text: str
+
+
+class PromptResponse(BaseModel):
+    prompt: str

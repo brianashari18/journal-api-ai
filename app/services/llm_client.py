@@ -11,19 +11,15 @@ OK untuk data sample/POC; untuk jurnal emosi asli pakai ollama lokal biar data t
 Embedding (bge-m3) selalu lokal di kedua mode.
 """
 
-import os
-
 import httpx
 
-OLLAMA_URL = "http://127.0.0.1:11434"
-EMBED_MODEL = "bge-m3"
-
+from app.core.config import settings
 
 def embed(text: str) -> list[float]:
     """Embedding 1 teks -> vektor 1024-d (bge-m3 via Ollama, SELALU lokal)."""
     resp = httpx.post(
-        f"{OLLAMA_URL}/api/embeddings",
-        json={"model": EMBED_MODEL, "prompt": text},
+        f"{settings.OLLAMA_URL}/api/embeddings",
+        json={"model": settings.EMBED_MODEL, "prompt": text},
         timeout=120,
     )
     resp.raise_for_status()
@@ -31,27 +27,28 @@ def embed(text: str) -> list[float]:
 
 
 def _provider() -> str:
-    p = os.environ.get("LLM_PROVIDER", "").strip().lower()
+    p = settings.LLM_PROVIDER
     if p in ("google", "ollama"):
         return p
-    return "google" if os.environ.get("GOOGLE_API_KEY", "") else "ollama"
+    return "google" if settings.GOOGLE_API_KEY else "ollama"
 
 
-def chat_json(system: str, user: str) -> str:
+def chat_json(system: str, user: str, temperature: float = 0.7) -> str:
     """Chat JSON mode. Return raw JSON string dari provider aktif."""
     if _provider() == "google":
-        return _google_chat_json(system, user)
-    return _ollama_chat_json(system, user)
+        return _google_chat_json(system, user, temperature)
+    return _ollama_chat_json(system, user, temperature)
 
 
-def _ollama_chat_json(system: str, user: str) -> str:
-    model = os.environ.get("OLLAMA_CHAT_MODEL", "qwen2.5:7b")
+def _ollama_chat_json(system: str, user: str, temperature: float) -> str:
+    model = settings.OLLAMA_CHAT_MODEL
     resp = httpx.post(
-        f"{OLLAMA_URL}/api/chat",
+        f"{settings.OLLAMA_URL}/api/chat",
         json={
             "model": model,
             "stream": False,
             "format": "json",
+            "options": {"temperature": temperature},
             "messages": [
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
@@ -63,16 +60,19 @@ def _ollama_chat_json(system: str, user: str) -> str:
     return resp.json()["message"]["content"]
 
 
-def _google_chat_json(system: str, user: str) -> str:
-    api_key = os.environ.get("GOOGLE_API_KEY", "")
+def _google_chat_json(system: str, user: str, temperature: float) -> str:
+    api_key = settings.GOOGLE_API_KEY
     if not api_key:
         raise RuntimeError("LLM_PROVIDER=google tapi GOOGLE_API_KEY kosong")
-    model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+    model = settings.GEMINI_MODEL
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
     body = {
         "systemInstruction": {"parts": [{"text": system}]},
         "contents": [{"role": "user", "parts": [{"text": user}]}],
-        "generationConfig": {"responseMimeType": "application/json", "temperature": 0.7},
+        "generationConfig": {
+            "responseMimeType": "application/json",
+            "temperature": temperature,
+        },
     }
     resp = httpx.post(url, params={"key": api_key}, json=body, timeout=180)
     resp.raise_for_status()

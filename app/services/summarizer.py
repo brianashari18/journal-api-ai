@@ -18,8 +18,8 @@ import uuid
 from datetime import date
 from typing import List, Optional
 
-from ollama_client import chat_json
-from schemas import (
+from app.services.llm_client import chat_json
+from app.schemas.journal import (
     ChangeSummary,
     EmotionItem,
     EmotionOverview,

@@ -5,8 +5,8 @@ import json
 import httpx
 import pytest
 
-import main as app_module  # noqa: E402
-import summarizer as summarizer_module  # noqa: E402
+import app.main as app_module  # noqa: E402
+import app.services.summarizer as summarizer_module  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 
@@ -24,7 +24,7 @@ pytestmark = pytest.mark.skipif(not _infra_up(), reason="Qdrant/Ollama bge-m3 ti
 
 @pytest.fixture
 def client(monkeypatch):
-    def fake_chat_json(system: str, user: str) -> str:
+    def fake_chat_json(system: str, user: str, temperature: float = 0.7) -> str:
         if "PERTANYAAN" in user:
             return json.dumps(
                 {"answer": "Paling cemas 2026-09-01 karena deadline.", "sources": ["2026-09-01"]}
@@ -37,8 +37,8 @@ def client(monkeypatch):
             }
         )
 
-    monkeypatch.setattr("main.chat_json", fake_chat_json)
-    monkeypatch.setattr("summarizer.chat_json", fake_chat_json)
+    monkeypatch.setattr("app.api.routers.journal_ai.chat_json", fake_chat_json)
+    monkeypatch.setattr("app.services.summarizer.chat_json", fake_chat_json)
     return TestClient(app_module.app)
 
 

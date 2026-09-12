@@ -12,4 +12,4 @@ lint:
 	.venv/bin/python -m pytest -q
 
 run:
-	.venv/bin/uvicorn main:app --port 8000
+	.venv/bin/uvicorn app.main:app --port 8000 --host 127.0.0.1

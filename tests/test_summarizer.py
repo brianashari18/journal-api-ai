@@ -1,7 +1,7 @@
 import json
 
-import summarizer
-from schemas import EmotionItem, Entry
+from app.services import summarizer
+from app.schemas.journal import EmotionItem, Entry
 
 
 def _e(date, emotions, text):
@@ -90,7 +90,7 @@ def test_generate_narrative_uses_candidate_ids(monkeypatch):
             "reflection_question": "What helped you move from frustration to relief?",
         }
     )
-    monkeypatch.setattr("summarizer.chat_json", lambda system, user: fake)
+    monkeypatch.setattr("app.services.summarizer.chat_json", lambda system, user: fake)
     entries = [
         _e("2026-09-01", [{"emotion": "frustrated", "intensity": 8}], "got many revisions"),
         _e("2026-09-02", [{"emotion": "frustrated", "intensity": 6}], "still many revisions"),
@@ -119,7 +119,7 @@ def test_assemble_rejects_causal_and_out_of_candidate(monkeypatch):
             "reflection_question": "Apa yang membuat perasaanmu berubah?",
         }
     )
-    monkeypatch.setattr("summarizer.chat_json", lambda system, user: fake)
+    monkeypatch.setattr("app.services.summarizer.chat_json", lambda system, user: fake)
     entries = [
         _e("2026-09-01", [{"emotion": "frustrated", "intensity": 8}], "got many revisions"),
         _e("2026-09-02", [{"emotion": "frustrated", "intensity": 6}], "still many revisions"),
@@ -147,7 +147,7 @@ def test_generate_narrative_drops_unknown_candidate_id(monkeypatch):
             "reflection_question": "pertanyaan?",
         }
     )
-    monkeypatch.setattr("summarizer.chat_json", lambda system, user: fake)
+    monkeypatch.setattr("app.services.summarizer.chat_json", lambda system, user: fake)
     entries = [
         _e("2026-09-01", [{"emotion": "frustrated", "intensity": 8}], "got many revisions"),
         _e("2026-09-02", [{"emotion": "frustrated", "intensity": 6}], "still many revisions"),
@@ -160,7 +160,7 @@ def test_generate_narrative_drops_unknown_candidate_id(monkeypatch):
 
 def test_generate_narrative_empty_llm_templates_everything(monkeypatch):
     fake = json.dumps({"patterns": [], "changes": [], "reflection_question": ""})
-    monkeypatch.setattr("summarizer.chat_json", lambda system, user: fake)
+    monkeypatch.setattr("app.services.summarizer.chat_json", lambda system, user: fake)
     entries = [
         _e("2026-09-01", [{"emotion": "frustrated", "intensity": 8}], "got many revisions"),
         _e("2026-09-02", [{"emotion": "frustrated", "intensity": 6}], "still many revisions"),
@@ -174,7 +174,7 @@ def test_generate_narrative_empty_llm_templates_everything(monkeypatch):
 
 
 def test_generate_narrative_fallback_on_bad_json(monkeypatch):
-    monkeypatch.setattr("summarizer.chat_json", lambda system, user: "bukan json")
+    monkeypatch.setattr("app.services.summarizer.chat_json", lambda system, user: "bukan json")
     entries = [
         _e("2026-09-01", [{"emotion": "frustrated", "intensity": 8}], "got many revisions"),
         _e("2026-09-02", [{"emotion": "frustrated", "intensity": 6}], "still many revisions"),

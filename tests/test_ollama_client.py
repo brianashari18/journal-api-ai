@@ -1,6 +1,8 @@
 """Unit test client LLM: provider detection + Gemini path (httpx di-mock)."""
 
 import json
+from app.services import llm_client as ollama_client
+from app.core.config import settings
 
 
 class _FakeResp:
@@ -17,33 +19,25 @@ class _FakeResp:
 
 
 def test_provider_auto_google_when_key_set(monkeypatch):
-    import ollama_client
-
-    monkeypatch.setenv("GOOGLE_API_KEY", "kunci")
-    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    monkeypatch.setattr(settings, "GOOGLE_API_KEY", "kunci")
+    monkeypatch.setattr(settings, "LLM_PROVIDER", "")
     assert ollama_client._provider() == "google"
 
 
 def test_provider_ollama_when_no_key(monkeypatch):
-    import ollama_client
-
-    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
-    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    monkeypatch.setattr(settings, "GOOGLE_API_KEY", "")
+    monkeypatch.setattr(settings, "LLM_PROVIDER", "")
     assert ollama_client._provider() == "ollama"
 
 
 def test_provider_explicit(monkeypatch):
-    import ollama_client
-
-    monkeypatch.setenv("GOOGLE_API_KEY", "kunci")
-    monkeypatch.setenv("LLM_PROVIDER", "ollama")
+    monkeypatch.setattr(settings, "GOOGLE_API_KEY", "kunci")
+    monkeypatch.setattr(settings, "LLM_PROVIDER", "ollama")
     assert ollama_client._provider() == "ollama"
 
 
 def test_google_chat_json_parses_candidate(monkeypatch):
-    import ollama_client
-
-    monkeypatch.setenv("GOOGLE_API_KEY", "kunci")
+    monkeypatch.setattr(settings, "GOOGLE_API_KEY", "kunci")
     captured = {}
 
     def fake_post(url, params=None, json=None, timeout=None):
@@ -55,20 +49,19 @@ def test_google_chat_json_parses_candidate(monkeypatch):
         )
 
     monkeypatch.setattr(ollama_client.httpx, "post", fake_post)
-    out = ollama_client._google_chat_json("sys", "user prompt")
+    out = ollama_client._google_chat_json("sys", "user prompt", 0.7)
     assert json.loads(out) == {"ok": True}
     assert "gemini-2.5-flash" in captured["url"]
     assert captured["params"] == {"key": "kunci"}
     assert captured["body"]["generationConfig"]["responseMimeType"] == "application/json"
+    assert captured["body"]["generationConfig"]["temperature"] == 0.7
 
 
 def test_google_chat_json_no_key_raises(monkeypatch):
-    import ollama_client
-
-    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
-    monkeypatch.setenv("LLM_PROVIDER", "google")
+    monkeypatch.setattr(settings, "GOOGLE_API_KEY", "")
+    monkeypatch.setattr(settings, "LLM_PROVIDER", "google")
     try:
-        ollama_client._google_chat_json("s", "u")
+        ollama_client._google_chat_json("s", "u", 0.7)
         assert False, "harus raise RuntimeError"
     except RuntimeError:
         pass

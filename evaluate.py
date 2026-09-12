@@ -16,9 +16,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-import qdrant_store  # noqa: E402
-import summarizer  # noqa: E402
-from schemas import EmotionItem, Entry  # noqa: E402
+from app.repository import qdrant_store  # noqa: E402
+from app.services import summarizer  # noqa: E402
+from app.schemas.journal import EmotionItem, Entry  # noqa: E402
 
 DATA = Path(__file__).parent / "data" / "journals" / "sample.json"
 

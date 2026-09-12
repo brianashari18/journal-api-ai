@@ -4,3 +4,6 @@ __pycache__/
 storage/
 *.log
 .DS_Store
+# secrets
+.env
+.env.*

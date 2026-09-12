@@ -23,7 +23,7 @@ echo "==> FastAPI (port 8000)"
 if curl -sf http://127.0.0.1:8000/health >/dev/null 2>&1; then
   echo "    sudah jalan"
 else
-  .venv/bin/uvicorn main:app --port 8000 >/tmp/ai-service.log 2>&1 &
+  .venv/bin/uvicorn app.main:app --port 8000 >/tmp/ai-service.log 2>&1 &
   echo "    fastapi started (log: /tmp/ai-service.log)"
 fi
 

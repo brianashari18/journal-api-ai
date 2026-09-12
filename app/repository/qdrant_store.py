@@ -12,27 +12,27 @@ from qdrant_client.models import (
     VectorParams,
 )
 
-from ollama_client import embed
-from schemas import EmotionItem, Entry
+from app.services.llm_client import embed
+from app.schemas.journal import EmotionItem, Entry
+from app.core.config import settings
 
-QDRANT_URL = "http://127.0.0.1:6333"
-COLLECTION = "journals"
 VECTOR_SIZE = 1024  # bge-m3
 
 
 def client() -> QdrantClient:
     # check_compatibility=False: client 1.16 vs server 1.19 beda minor > 1,
     # tapi API yang dipakai stabil — warning-nya cuma noise.
-    return QdrantClient(url=QDRANT_URL, check_compatibility=False)
+    return QdrantClient(url=settings.QDRANT_URL, check_compatibility=False)
 
 
 def ensure_collection() -> None:
     c = client()
-    if not c.collection_exists(COLLECTION):
+    if not c.collection_exists(settings.COLLECTION):
         c.create_collection(
-            collection_name=COLLECTION,
+            collection_name=settings.COLLECTION,
             vectors_config=VectorParams(size=VECTOR_SIZE, distance=Distance.COSINE),
         )
+        print(f"[qdrant] Collection '{settings.COLLECTION}' dibuat (cosine, dim={VECTOR_SIZE}).")
 
 
 def point_id(entry: Entry) -> str:
@@ -59,7 +59,7 @@ def upsert_entries(entries: list[Entry]) -> None:
                 },
             )
         )
-    c.upsert(collection_name=COLLECTION, points=points)
+    c.upsert(collection_name=settings.COLLECTION, points=points)
 
 
 def _to_entry(payload: dict) -> Entry:
@@ -75,7 +75,7 @@ def retrieve_by_date(start: str, end: str) -> list[Entry]:
     """Retrieval RAG: filter skalar (tanggal) via payload. Semua entri dalam rentang."""
     c = client()
     records, _ = c.scroll(
-        collection_name=COLLECTION,
+        collection_name=settings.COLLECTION,
         scroll_filter=Filter(
             must=[
                 FieldCondition(
@@ -94,7 +94,7 @@ def search_similar(text: str, limit: int = 5) -> list[Entry]:
     """Retrieval RAG klasik: similarity search di vektor."""
     c = client()
     hits = c.query_points(
-        collection_name=COLLECTION,
+        collection_name=settings.COLLECTION,
         query=embed(text),
         limit=limit,
         with_payload=True,
