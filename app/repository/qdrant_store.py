@@ -7,6 +7,7 @@ from qdrant_client.models import (
     Distance,
     FieldCondition,
     Filter,
+    PayloadSchemaType,
     PointStruct,
     Range,
     VectorParams,
@@ -20,6 +21,15 @@ VECTOR_SIZE = settings.EMBED_DIM  # dimensi ikut provider embedding (google 768 
 
 
 def client() -> QdrantClient:
+    # Cloud (Qdrant Cloud): endpoint https + api-key, wajib REST (prefer_grpc=False).
+    # Lokal: url plain tanpa key.
+    if settings.QDRANT_CLUSTER_ENDPOINT:
+        return QdrantClient(
+            url=settings.QDRANT_CLUSTER_ENDPOINT,
+            api_key=settings.QDRANT_API_KEY,
+            prefer_grpc=False,
+            check_compatibility=False,
+        )
     # check_compatibility=False: client 1.16 vs server 1.19 beda minor > 1,
     # tapi API yang dipakai stabil — warning-nya cuma noise.
     return QdrantClient(url=settings.QDRANT_URL, check_compatibility=False)
@@ -33,6 +43,18 @@ def ensure_collection() -> None:
             vectors_config=VectorParams(size=VECTOR_SIZE, distance=Distance.COSINE),
         )
         print(f"[qdrant] Collection '{settings.COLLECTION}' dibuat (cosine, dim={VECTOR_SIZE}).")
+
+    # Qdrant Cloud (server baru) WAJIB payload index buat Range-filter numerik (date_ts);
+    # server lokal 1.19 toleran tanpa index. Kalau skip -> cloud balas
+    # 400 "Index required but not found for date_ts".
+    info = c.get_collection(settings.COLLECTION)
+    if "date_ts" not in (info.payload_schema or {}):
+        c.create_payload_index(
+            collection_name=settings.COLLECTION,
+            field_name="date_ts",
+            field_schema=PayloadSchemaType.INTEGER,
+        )
+        print(f"[qdrant] Payload index 'date_ts' (integer) dibuat.")
 
 
 def point_id(entry: Entry) -> str:

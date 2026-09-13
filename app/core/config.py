@@ -15,6 +15,9 @@ class Settings:
     EMBED_MODEL: str = os.environ.get("EMBED_MODEL", "gemini-embedding-001")
     EMBED_DIM: int = int(os.environ.get("EMBED_DIM", "768"))
     QDRANT_URL: str = os.environ.get("QDRANT_URL", "http://127.0.0.1:6333")
+    # Qdrant Cloud (kalau diset): endpoint https + api key -> prioritas di atas QDRANT_URL lokal.
+    QDRANT_API_KEY: str = os.environ.get("QDRANT_API_KEY", "")
+    QDRANT_CLUSTER_ENDPOINT: str = os.environ.get("QDRANT_CLUSTER_ENDPOINT", "")
     COLLECTION: str = os.environ.get("COLLECTION", "journals")
 
 settings = Settings()

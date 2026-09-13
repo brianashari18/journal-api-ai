@@ -16,9 +16,26 @@ Dimensi vektor beda per provider (google 768 vs ollama 1024) -> collection Qdran
 dimensinya ikut `EMBED_DIM` dan harus cocok dengan provider yang aktif.
 """
 
+import time
+
 import httpx
 
 from app.core.config import settings
+
+
+def _post_google(url: str, params: dict, body: dict, timeout: float, attempts: int = 4) -> httpx.Response:
+    """POST ke Gemini API dengan retry + backoff buat 429 (free-tier rate limit).
+
+    Kalau quota harian benar-benar habis, 4 percobaan tetap 429 -> return respons 429
+    terakhir (raise_for_status di caller yang nanti raise; retry tak bisa menembus quota).
+    """
+    resp = httpx.post(url, params=params, json=body, timeout=timeout)
+    for i in range(1, attempts):
+        if resp.status_code != 429:
+            return resp
+        time.sleep(2 ** (i - 1))  # 1s, 2s, 4s
+        resp = httpx.post(url, params=params, json=body, timeout=timeout)
+    return resp
 
 
 def _resolve_provider(explicit: str) -> str:
@@ -64,7 +81,7 @@ def _google_embed(text: str) -> list[float]:
         "content": {"parts": [{"text": text}]},
         "outputDimensionality": settings.EMBED_DIM,
     }
-    resp = httpx.post(url, params={"key": api_key}, json=body, timeout=120)
+    resp = _post_google(url, {"key": api_key}, body, 120)
     resp.raise_for_status()
     data = resp.json()
     try:
@@ -114,7 +131,7 @@ def _google_chat_json(system: str, user: str, temperature: float) -> str:
             "temperature": temperature,
         },
     }
-    resp = httpx.post(url, params={"key": api_key}, json=body, timeout=180)
+    resp = _post_google(url, {"key": api_key}, body, 180)
     resp.raise_for_status()
     data = resp.json()
     try:

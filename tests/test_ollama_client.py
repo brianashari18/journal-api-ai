@@ -9,6 +9,7 @@ class _FakeResp:
     def __init__(self, data, status=200):
         self._data = data
         self._status = status
+        self.status_code = status
 
     def raise_for_status(self):
         if self._status != 200:
