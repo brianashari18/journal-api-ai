@@ -12,5 +12,3 @@ def health():
     return {"status": "ok", "service": "journal-ai"}
 
 app.include_router(journal_ai.router)
-
-# ci-test marker
