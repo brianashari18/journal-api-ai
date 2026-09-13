@@ -40,7 +40,7 @@ def _post_google(url: str, params: dict, body: dict, timeout: float, attempts: i
 
 def _resolve_provider(explicit: str) -> str:
     p = (explicit or "").strip().lower()
-    if p in ("google", "ollama"):
+    if p in ("google", "ollama", "opencode"):
         return p
     return "google" if settings.GOOGLE_API_KEY else "ollama"
 
@@ -92,8 +92,11 @@ def _google_embed(text: str) -> list[float]:
 
 def chat_json(system: str, user: str, temperature: float = 0.7) -> str:
     """Chat JSON mode. Return raw JSON string dari provider aktif."""
-    if _chat_provider() == "google":
+    provider = _chat_provider()
+    if provider == "google":
         return _google_chat_json(system, user, temperature)
+    if provider == "opencode":
+        return _opencode_chat_json(system, user, temperature)
     return _ollama_chat_json(system, user, temperature)
 
 
@@ -138,3 +141,47 @@ def _google_chat_json(system: str, user: str, temperature: float) -> str:
         return data["candidates"][0]["content"]["parts"][0]["text"]
     except (KeyError, IndexError, TypeError):
         raise RuntimeError(f"Gemini response tak dikenal: {data}")
+
+
+def _post_opencode(url: str, headers: dict, body: dict, timeout: float, attempts: int = 4) -> httpx.Response:
+    """POST OpenAI-compatible dengan retry + backoff buat 429."""
+    resp = httpx.post(url, headers=headers, json=body, timeout=timeout)
+    for i in range(1, attempts):
+        if resp.status_code != 429:
+            return resp
+        time.sleep(2 ** (i - 1))
+        resp = httpx.post(url, headers=headers, json=body, timeout=timeout)
+    return resp
+
+
+def _opencode_chat_json(system: str, user: str, temperature: float) -> str:
+    api_key = settings.OPENCODE_API_KEY
+    if not api_key:
+        raise RuntimeError("LLM_PROVIDER=opencode tapi OPENCODE_API_KEY kosong")
+    url = f"{settings.OPENCODE_BASE_URL.rstrip('/')}/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "x-opencode-session": "journal-ai-worker",
+    }
+    body = {
+        "model": settings.OPENCODE_MODEL,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+        "response_format": {"type": "json_object"},
+        "temperature": temperature,
+    }
+    resp = _post_opencode(url, headers, body, 180)
+    resp.raise_for_status()
+    data = resp.json()
+    try:
+        content = data["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError):
+        raise RuntimeError(f"opencode response tak dikenal: {data}")
+    # Reasoning model (deepseek-v4-pro) bisa return content kosong kalau token habis
+    # di reasoning_content — jangan diam-diam return "" ke parser JSON.
+    if not content:
+        finish = data.get("choices", [{}])[0].get("finish_reason")
+        raise RuntimeError(f"opencode content kosong (finish_reason={finish}) — naikkan token?")
+    return content
