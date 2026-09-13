@@ -1,0 +1,21 @@
+name: Deploy AI
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: 13.62.99.137
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/journal/journal-api-ai
+            git pull origin main
+            cd ~/journal
+            docker compose up -d --build ai
