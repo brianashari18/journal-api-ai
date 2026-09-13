@@ -5,6 +5,8 @@ load_dotenv()
 
 class Settings:
     LLM_PROVIDER: str = os.environ.get("LLM_PROVIDER", "").strip().lower()
+    # Fallback chat: kalau LLM_PROVIDER gagal, coba provider ini (mis. "google").
+    LLM_FALLBACK: str = os.environ.get("LLM_FALLBACK", "").strip().lower()
     GOOGLE_API_KEY: str = os.environ.get("GOOGLE_API_KEY", "")
     GEMINI_MODEL: str = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
     OLLAMA_URL: str = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")

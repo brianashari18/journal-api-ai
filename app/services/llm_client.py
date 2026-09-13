@@ -91,13 +91,30 @@ def _google_embed(text: str) -> list[float]:
 
 
 def chat_json(system: str, user: str, temperature: float = 0.7) -> str:
-    """Chat JSON mode. Return raw JSON string dari provider aktif."""
-    provider = _chat_provider()
-    if provider == "google":
-        return _google_chat_json(system, user, temperature)
-    if provider == "opencode":
-        return _opencode_chat_json(system, user, temperature)
-    return _ollama_chat_json(system, user, temperature)
+    """Chat JSON mode dengan fallback: primary (LLM_PROVIDER) dulu, LLM_FALLBACK kalau gagal.
+
+    Raise exception hanya kalau SEMUA provider gagal — summarizer nanti yang
+    fallback ke template deterministik sebagai lapisan terakhir.
+    """
+    providers = [_chat_provider()]
+    fb = (settings.LLM_FALLBACK or "").strip().lower()
+    if fb and fb != providers[0]:
+        providers.append(fb)
+
+    last_err = None
+    for p in providers:
+        try:
+            if p == "google":
+                return _google_chat_json(system, user, temperature)
+            if p == "opencode":
+                return _opencode_chat_json(system, user, temperature)
+            return _ollama_chat_json(system, user, temperature)
+        except Exception as e:  # noqa: BLE001 — jalur fallback
+            last_err = e
+
+    if last_err is not None:
+        raise last_err
+    raise RuntimeError("tidak ada provider LLM tersedia")
 
 
 def _ollama_chat_json(system: str, user: str, temperature: float) -> str:
