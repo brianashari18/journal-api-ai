@@ -16,7 +16,7 @@ from app.services.llm_client import embed
 from app.schemas.journal import EmotionItem, Entry
 from app.core.config import settings
 
-VECTOR_SIZE = 1024  # bge-m3
+VECTOR_SIZE = settings.EMBED_DIM  # dimensi ikut provider embedding (google 768 / ollama 1024)
 
 
 def client() -> QdrantClient:

@@ -21,19 +21,19 @@ class _FakeResp:
 def test_provider_auto_google_when_key_set(monkeypatch):
     monkeypatch.setattr(settings, "GOOGLE_API_KEY", "kunci")
     monkeypatch.setattr(settings, "LLM_PROVIDER", "")
-    assert ollama_client._provider() == "google"
+    assert ollama_client._chat_provider() == "google"
 
 
 def test_provider_ollama_when_no_key(monkeypatch):
     monkeypatch.setattr(settings, "GOOGLE_API_KEY", "")
     monkeypatch.setattr(settings, "LLM_PROVIDER", "")
-    assert ollama_client._provider() == "ollama"
+    assert ollama_client._chat_provider() == "ollama"
 
 
 def test_provider_explicit(monkeypatch):
     monkeypatch.setattr(settings, "GOOGLE_API_KEY", "kunci")
     monkeypatch.setattr(settings, "LLM_PROVIDER", "ollama")
-    assert ollama_client._provider() == "ollama"
+    assert ollama_client._chat_provider() == "ollama"
 
 
 def test_google_chat_json_parses_candidate(monkeypatch):

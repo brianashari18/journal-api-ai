@@ -12,14 +12,22 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 def _infra_up() -> bool:
     try:
-        tags = httpx.get("http://127.0.0.1:11434/api/tags", timeout=2).json().get("models", [])
-        qdrant = httpx.get("http://127.0.0.1:6333/healthz", timeout=2).status_code
-        return qdrant == 200 and any(m["name"].startswith("bge-m3") for m in tags)
+        qdrant = httpx.get("http://127.0.0.1:6333/healthz", timeout=2).status_code == 200
+        if not qdrant:
+            return False
+        from app.core.config import settings
+
+        if settings.EMBED_PROVIDER == "ollama" or (
+            not settings.EMBED_PROVIDER and not settings.GOOGLE_API_KEY
+        ):
+            tags = httpx.get("http://127.0.0.1:11434/api/tags", timeout=2).json().get("models", [])
+            return any(m["name"].startswith("bge-m3") for m in tags)
+        return bool(settings.GOOGLE_API_KEY)
     except Exception:
         return False
 
 
-pytestmark = pytest.mark.skipif(not _infra_up(), reason="Qdrant/Ollama bge-m3 tidak hidup")
+pytestmark = pytest.mark.skipif(not _infra_up(), reason="Qdrant/embedding provider tidak hidup")
 
 
 @pytest.fixture
