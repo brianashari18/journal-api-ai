@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException
 from app.repository import qdrant_store
 from app.services import summarizer
 from app.services.llm_client import chat_json
+from app.core.config import settings
 from app.schemas.journal import (
     EntriesRequest,
     EntriesResponse,
@@ -135,8 +136,8 @@ def generate_prompt(req: PromptRequest):
         # Abaikan error Qdrant agar prompt tetap berjalan meskipun DB kosong/mati
         print(f"RAG Error: {e}")
     
-    # Gunakan temperature yang lebih tinggi agar prompt lebih bervariasi dan natural
-    raw = chat_json(system_prompt, user_prompt, temperature=0.9)
+    # Model cepat (flash) biar prompt muncul <2s pas user ngetik, bukan nunggu reasoning model.
+    raw = chat_json(system_prompt, user_prompt, temperature=0.9, model=settings.PROMPT_MODEL)
     try:
         data = json.loads(raw)
         prompt_str = data.get("prompt", "")

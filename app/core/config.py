@@ -15,6 +15,8 @@ class Settings:
     OPENCODE_API_KEY: str = os.environ.get("OPENCODE_API_KEY", os.environ.get("OPENCODE_GO_API_KEY", ""))
     OPENCODE_BASE_URL: str = os.environ.get("OPENCODE_BASE_URL", "https://opencode.ai/zen/go/v1")
     OPENCODE_MODEL: str = os.environ.get("OPENCODE_MODEL", "deepseek-v4-pro")
+    # Model cepat buat endpoint yang butuh latensi rendah (mis. /ai/prompt pas user ngetik).
+    PROMPT_MODEL: str = os.environ.get("PROMPT_MODEL", "deepseek-v4-flash")
     # Embedding provider: "google" (Gemini gemini-embedding-001, 768-d) | "ollama" (bge-m3, 1024-d).
     # Kosong = auto: google kalau GOOGLE_API_KEY ada, selain itu ollama.
     EMBED_PROVIDER: str = os.environ.get("EMBED_PROVIDER", "").strip().lower()

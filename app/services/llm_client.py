@@ -17,6 +17,7 @@ dimensinya ikut `EMBED_DIM` dan harus cocok dengan provider yang aktif.
 """
 
 import time
+from typing import Optional
 
 import httpx
 
@@ -90,8 +91,11 @@ def _google_embed(text: str) -> list[float]:
         raise RuntimeError(f"Gemini embed response tak dikenal: {data}")
 
 
-def chat_json(system: str, user: str, temperature: float = 0.7) -> str:
+def chat_json(system: str, user: str, temperature: float = 0.7, model: Optional[str] = None) -> str:
     """Chat JSON mode dengan fallback: primary (LLM_PROVIDER) dulu, LLM_FALLBACK kalau gagal.
+
+    `model` = override model untuk provider opencode (default OPENCODE_MODEL).
+    Provider google/ollama abaikan `model` (pakai setting masing-masing).
 
     Raise exception hanya kalau SEMUA provider gagal — summarizer nanti yang
     fallback ke template deterministik sebagai lapisan terakhir.
@@ -107,7 +111,7 @@ def chat_json(system: str, user: str, temperature: float = 0.7) -> str:
             if p == "google":
                 return _google_chat_json(system, user, temperature)
             if p == "opencode":
-                return _opencode_chat_json(system, user, temperature)
+                return _opencode_chat_json(system, user, temperature, model)
             return _ollama_chat_json(system, user, temperature)
         except Exception as e:  # noqa: BLE001 — jalur fallback
             last_err = e
@@ -171,7 +175,7 @@ def _post_opencode(url: str, headers: dict, body: dict, timeout: float, attempts
     return resp
 
 
-def _opencode_chat_json(system: str, user: str, temperature: float) -> str:
+def _opencode_chat_json(system: str, user: str, temperature: float, model: Optional[str] = None) -> str:
     api_key = settings.OPENCODE_API_KEY
     if not api_key:
         raise RuntimeError("LLM_PROVIDER=opencode tapi OPENCODE_API_KEY kosong")
@@ -181,7 +185,7 @@ def _opencode_chat_json(system: str, user: str, temperature: float) -> str:
         "x-opencode-session": "journal-ai-worker",
     }
     body = {
-        "model": settings.OPENCODE_MODEL,
+        "model": model or settings.OPENCODE_MODEL,
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
